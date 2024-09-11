@@ -1,5 +1,5 @@
 import React from 'react';
-
+//CustomerList file to render the customer list on App.js
 function CustomerList({ customers, selectedCustomer, handleCustomerClick }) {
   return (
     <div className="table-section">

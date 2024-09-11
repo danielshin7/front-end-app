@@ -1,98 +1,128 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';  
-import CustomerAddUpdateForm from './CustomerAddUpdateForm';
-import CustomerList from './CustomerList';
-import { getAll, deleteById, post, put } from './memdb';
+import CustomerAddUpdateForm from './CustomerAddUpdateForm.js';
+import CustomerList from './CustomerList.js';
+import { getAll, post, put, deleteById } from './restdb'; // Import the new restdb functions
 
 function App() {
-  //Sets to empty array
+  // State to hold customer data
   const [customers, setCustomers] = useState([]);
-  //Default values for form data
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-  //Sets to null use state for selected customer
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  //Defines blank customer with empty values
-  const blankCustomer = { name: '', email: '', password: '' };
-  //Defines mode depending on if a customer has been selected
-  const mode = selectedCustomer ? "Update" : "Add";
 
-  //Uses customer data from memdb.js
-  const getCustomers = () => {
-    const customerData = getAll();
-    setCustomers(customerData);
+  // Retrieve customers from the database using getAll from restdb.js
+  const getCustomers = function () {
+    console.log("Fetching customers...");
+    getAll(setCustomers);//Fetches customers from API
   };
+
+  // Fetch customers on component mount and whenever formData changes
   useEffect(() => {
     getCustomers();
   }, []);
 
-  //Delete function
+  // State for form
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: ''
+  });
+
+  // State for selected customer
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  // Define a blank customer for resetting the form
+  const blankCustomer = { name: '', email: '', password: '' };
+
+  // Mode for adding or updating customer data
+  const mode = selectedCustomer ? "Update" : "Add";
+
+  // Handle customer delete
   const handleDelete = () => {
-    if (!selectedCustomer) {
-      console.log('Error. No customer was selected');
-      return;
+    console.log('Delete button clicked');
+    const postOpCallback = () => {
+      setFormData(blankCustomer); // Reset the form after deletion
+      setSelectedCustomer(null); // Deselect customer
+      getCustomers(); // Refresh the customer list
+    };
+    if (selectedCustomer && selectedCustomer.id >= 0) {
+      deleteById(selectedCustomer.id, postOpCallback);
+    } else {
+      setFormData(blankCustomer);
     }
-    deleteById(selectedCustomer.id);
-    setFormData(blankCustomer);
-    setSelectedCustomer(null);
-    getCustomers();
   };
 
-  //Save function
+  // Handle customer save (add or update)
   const handleSave = () => {
+    console.log('Save button clicked');
+    const postOpCallback = () => {
+      setFormData(blankCustomer); // Reset the form after save
+      setSelectedCustomer(null); // Deselect customer
+      getCustomers(); // Refresh the customer list
+    };
     if (mode === 'Add') {
+      // Validate input fields
       if (!formData.name || !formData.email || !formData.password) {
         console.log('All input fields must be filled');
         return;
       }
-      post(formData);
+      post(formData, postOpCallback); // Add a new customer
     } else if (mode === 'Update' && selectedCustomer) {
-      put(selectedCustomer.id, formData);
+      put(selectedCustomer.id, formData, postOpCallback); // Update an existing customer
     }
-    setFormData(blankCustomer);
-    setSelectedCustomer(null);
-    getCustomers();
   };
 
-  //Cancel function
+  // Handle form cancel/reset
   const handleCancel = () => {
-    setSelectedCustomer(null);
-    setFormData(blankCustomer);
+    setSelectedCustomer(null); // Deselect customer
+    setFormData(blankCustomer); // Reset the form
   };
 
-  //Click function
-  const handleCustomerClick = (customer) => {
-    if (selectedCustomer && selectedCustomer.id === customer.id) {
-      setSelectedCustomer(null);
-      setFormData(blankCustomer);
-    } else {
-      setSelectedCustomer(customer);
-      setFormData(customer);
-    }
-  };
-
-  //Input functionality
+  // Handle input field changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData({
+      ...formData,
+      [name]: value
+    });
   };
 
-  //UI Return page
+  // Handle customer selection from the list
+  const handleCustomerClick = (customer) => {
+    if (selectedCustomer && selectedCustomer.id === customer.id) {
+      setSelectedCustomer(null); // Deselect the customer
+      setFormData(blankCustomer); // Reset the form
+    } else {
+      setSelectedCustomer(customer); // Select the customer
+      setFormData({
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        password: customer.password
+      });
+    }
+  };
+
   return (
     <div>
       <h1>Customer Management</h1>
-      <CustomerList
-        customers={customers}
-        selectedCustomer={selectedCustomer}
-        handleCustomerClick={handleCustomerClick}
-      />
-      <CustomerAddUpdateForm
-        mode={mode}
-        formData={formData}
-        handleInputChange={handleInputChange}
-        handleSave={handleSave}
-        handleCancel={handleCancel}
-        handleDelete={handleDelete}
-      />
+
+      <div className="table-section">
+        <CustomerList 
+          customers={customers}
+          selectedCustomer={selectedCustomer}
+          handleCustomerClick={handleCustomerClick}
+        />
+      </div>
+
+      <div className="form-section">
+        <CustomerAddUpdateForm
+          mode={mode}
+          formData={formData}
+          handleInputChange={handleInputChange}
+          handleSave={handleSave}
+          handleDelete={handleDelete}
+          handleCancel={handleCancel}
+        />
+      </div>
     </div>
   );
 }

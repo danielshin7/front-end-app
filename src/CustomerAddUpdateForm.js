@@ -1,5 +1,5 @@
 import React from 'react';
-
+//Customer Add/Update Form 
 function CustomerAddUpdateForm({ mode, formData, handleInputChange, handleSave, handleCancel, handleDelete }) {
   return (
     <div className="form-section">
