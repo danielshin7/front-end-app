@@ -1,9 +1,40 @@
-import React from 'react';
-//Customer Add/Update Form 
-function CustomerAddUpdateForm({ mode, formData, handleInputChange, handleSave, handleCancel, handleDelete }) {
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+function CustomerAddUpdateForm({
+  selectedCustomer,
+  blankCustomer,
+  handleSave,
+  handleDelete,
+  setSelectedCustomer,
+}) {
+  const [formData, setFormData] = useState(blankCustomer);
+  const navigate = useNavigate();
+
+  //Sets the field inputs as selected customer or blank 
+  useEffect(() => {
+    if (selectedCustomer) {
+      setFormData(selectedCustomer);
+    } else {
+      setFormData(blankCustomer);
+    }
+  }, [selectedCustomer, blankCustomer]);
+
+  //Allows for field input
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  //Navigates back to first page when cancel is clicked
+  const handleCancel = () => {
+    setSelectedCustomer(null);
+    navigate('/');
+  };
+
   return (
-    <div className="form-section">
-      <h2>{mode} Customer</h2>
+    <div>
+      <h2>{selectedCustomer ? 'Update' : 'Add'} Customer</h2>
       <form>
         <label>
           Name:
@@ -35,11 +66,31 @@ function CustomerAddUpdateForm({ mode, formData, handleInputChange, handleSave, 
           />
         </label>
         <br />
-        <div className="form-buttons">
-          <button type="button" onClick={handleDelete}>Delete</button>
-          <button type="button" onClick={handleSave}>Save</button>
-          <button type="button" onClick={handleCancel}>Cancel</button>
-        </div>
+        <button
+          type="button"
+          onClick={() =>
+            handleSave(formData, () => {
+              navigate('/');
+            })
+          }
+        >
+          Save
+        </button>
+        <button type="button" onClick={handleCancel}>
+          Cancel
+        </button>
+        {selectedCustomer && (
+          <button
+            type="button"
+            onClick={() =>
+              handleDelete(() => {
+                navigate('/');
+              })
+            }
+          >
+            Delete
+          </button>
+        )}
       </form>
     </div>
   );
